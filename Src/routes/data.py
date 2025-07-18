@@ -23,10 +23,11 @@ from fastapi import FastAPI, APIRouter, Depends, UploadFile, status
 from fastapi.responses import JSONResponse
 import os
 from helpers.config import get_settings, Settings
-from controllers import DataController, ProjectController
+from controllers import DataController, ProjectController, ProcessController
 import aiofiles
 from models import ResponseSignals
 import logging
+from .schemes.data import ProcessRequest
 
 # Set up logging for error tracking
 logger = logging.getLogger('uvicorn.error')
@@ -121,3 +122,43 @@ async def upload_data(project_id: str, file: UploadFile,
                 "file_id": file_id
             }
         )
+
+@data_router.post("/process/{project_id}")
+async def process_endpoint(project_id: str, process_request: ProcessRequest,
+                app_settings: Settings = Depends(get_settings)):
+    
+    file_id = process_request.file_id
+    chunck_size = process_request.chunk_size
+    chunk_overlap = process_request.chunk_size
+
+    process_controller = ProcessController(project_id=project_id)
+
+    # Get file content based on file ID
+    file_content = process_controller.get_file_content(file_id=file_id)
+
+    if not file_content:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={
+                "signal": ResponseSignals.FILE_NOT_FOUND.value
+            }
+        )
+    
+    # Process file content into chunks
+    file_chunks = process_controller.proess_file_content(
+        file_content=file_content,
+        chunk_size=chunck_size,
+        chunk_overlap=chunk_overlap,
+        file_id=file_id
+    )
+
+    if not file_chunks:
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
+                "signal": ResponseSignals.FILE_PROCESSING_FAIL.value
+            }
+        )
+    
+    # Return success response with processed file chunks
+    return file_chunks
