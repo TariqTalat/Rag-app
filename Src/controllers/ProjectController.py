@@ -66,7 +66,7 @@ class ProjectController(BaseController):
         Dependencies:
             - self.files_dir: Base files directory from BaseController
         """
-        # Create project-specific directory path
+        # Create project-specific directory path within the files directory
         project_dir = os.path.join(
             self.files_dir,  # Base files directory from BaseController
             project_id

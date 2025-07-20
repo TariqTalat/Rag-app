@@ -53,6 +53,7 @@ async def welcome(app_settings: Settings = Depends(get_settings)):
     # Used by: helpers/config.py -> Settings.APP_VERSION
     app_version = app_settings.APP_VERSION
 
+    # Return application metadata as JSON response
     return {
         "app_name": app_name,
         "app_version": app_version,

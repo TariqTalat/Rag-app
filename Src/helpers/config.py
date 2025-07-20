@@ -14,6 +14,7 @@ Used by:
 - controllers/BaseController.py: For accessing app settings
 - routes/base.py: For dependency injection in API endpoints
 - routes/data.py: For dependency injection in file upload endpoints
+- main.py: For MongoDB connection settings
 """
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -32,13 +33,24 @@ class Settings(BaseSettings):
         FILE_ALLOWED_TYPES (list[str]): List of allowed file types for upload
         FILE_MAX_SIZE (int): Maximum file size in MB
         FILE_DEFAULT_CHUNK_SIZE (int): Default chunk size for file processing
+        MONGODB_URL (str): MongoDB connection string
+        MONGODB_DATABASE (str): MongoDB database name
     """
+    # Application metadata
     APP_NAME: str
     APP_VERSION: str
+    
+    # API configuration
     OPENAI_API_KEY: str
+    
+    # File upload settings
     FILE_ALLOWED_TYPES: list[str]
     FILE_MAX_SIZE: int
     FILE_DEFAULT_CHUNK_SIZE: int
+    
+    # Database configuration
+    MONGODB_URL: str
+    MONGODB_DATABASE: str
     
     class Config:
         """
@@ -63,5 +75,7 @@ def get_settings() -> Settings:
         - controllers/BaseController.py: For initializing controller settings
         - routes/base.py: As dependency injection for API endpoints
         - routes/data.py: As dependency injection for file upload endpoints
+        - main.py: For MongoDB connection setup
     """
+    # Create and return Settings instance with environment variables
     return Settings()

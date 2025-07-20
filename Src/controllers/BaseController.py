@@ -77,4 +77,5 @@ class BaseController:
         Used by:
             - DataController.generate_unique_filepath(): For creating unique file names
         """
+        # Generate random string using lowercase letters and digits
         return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))

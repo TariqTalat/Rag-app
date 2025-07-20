@@ -1,6 +1,6 @@
 # Mini-RAG System
 
-A minimal implementation of a Retrieval-Augmented Generation (RAG) system for question answering, built with FastAPI. This system provides file upload capabilities, project-based organization, and a foundation for building RAG applications.
+A minimal implementation of a Retrieval-Augmented Generation (RAG) system for question answering, built with FastAPI and MongoDB. This system provides file upload capabilities, project-based organization, and a foundation for building RAG applications.
 
 ## 🏗️ Project Architecture
 
@@ -8,7 +8,7 @@ A minimal implementation of a Retrieval-Augmented Generation (RAG) system for qu
 ```
 mini-rag/
 ├── Src/
-│   ├── main.py                 # FastAPI application entry point
+│   ├── main.py                 # FastAPI application entry point with MongoDB
 │   ├── requirements.txt        # Python dependencies
 │   ├── controllers/            # Business logic controllers
 │   │   ├── BaseController.py   # Base controller with common functionality
@@ -34,9 +34,10 @@ mini-rag/
 ### Component Connections
 
 #### Core Components Flow
-1. **main.py** → Initializes FastAPI app and includes routers
+1. **main.py** → Initializes FastAPI app with MongoDB and includes routers
    - Includes `routes/base.py` → General API endpoints
    - Includes `routes/data.py` → File upload endpoints
+   - Connects to MongoDB → Database operations
 
 2. **routes/data.py** → File upload endpoint
    - Uses `DataController` → File validation and processing
@@ -59,7 +60,7 @@ mini-rag/
 
 6. **helpers/config.py** → Configuration management
    - Uses Pydantic Settings for type-safe configuration
-   - Loads from `.env` file
+   - Loads from `.env` file including MongoDB settings
 
 ## 🚀 Features
 
@@ -67,6 +68,7 @@ mini-rag/
 - **Project Organization**: Files organized by project ID
 - **Unique File Naming**: Prevents filename conflicts with random string prefixes
 - **Async File Processing**: Non-blocking file operations
+- **MongoDB Integration**: Database storage for metadata and file information
 - **Standardized Responses**: Consistent API response format
 - **Configuration Management**: Environment-based configuration
 - **Error Handling**: Comprehensive error handling and logging
@@ -76,6 +78,7 @@ mini-rag/
 - Python 3.8 or later
 - FastAPI framework
 - Uvicorn ASGI server
+- MongoDB database
 
 ### Install Python using MiniConda
 
@@ -103,6 +106,12 @@ export PS1="\[\033[01;32m\]\u@\h:\w\n\[\033[00m\]\$ "
 $ pip install -r requirements.txt
 ```
 
+### Setup MongoDB
+
+1. Install MongoDB on your system
+2. Start MongoDB service
+3. Create a database for the application
+
 ### Setup the environment variables
 
 ```bash
@@ -112,12 +121,21 @@ $ cp .env.example .env
 Set your environment variables in the `.env` file:
 
 ```env
+# Application metadata
 APP_NAME=mini-rag
 APP_VERSION=1.0.0
+
+# API configuration
 OPENAI_API_KEY=your_openai_api_key_here
+
+# File upload settings
 FILE_ALLOWED_TYPES=["text/plain","application/pdf","text/csv"]
 FILE_MAX_SIZE=10
 FILE_DEFAULT_CHUNK_SIZE=8192
+
+# Database configuration
+MONGODB_URL=mongodb://localhost:27017
+MONGODB_DATABASE=mini_rag
 ```
 
 ## 🚀 Running the Application
@@ -184,6 +202,8 @@ Upload a file to a specific project
 | `FILE_ALLOWED_TYPES` | Allowed file types | `["text/plain","application/pdf","text/csv"]` |
 | `FILE_MAX_SIZE` | Maximum file size in MB | `10` |
 | `FILE_DEFAULT_CHUNK_SIZE` | File chunk size for processing | `8192` |
+| `MONGODB_URL` | MongoDB connection string | `mongodb://localhost:27017` |
+| `MONGODB_DATABASE` | MongoDB database name | `mini_rag` |
 
 ## 📁 File Storage
 
@@ -249,6 +269,14 @@ The system uses standardized response signals for consistent error handling:
 - `FILE_SIZE_EXCEEDED`: File too large
 - `FILE_UPLOAD_SUCCESS`: Upload successful
 - `FILE_UPLOADED_FAIL`: Upload failed
+
+### Database Integration
+
+The application uses MongoDB for:
+- File metadata storage
+- Project information
+- User data (future feature)
+- Search indexing (future feature)
 
 ## 🤝 Contributing
 

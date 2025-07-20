@@ -122,7 +122,7 @@ class DataController(BaseController):
             orig_file_name=orig_file_name
         )
 
-        # Create the new file path
+        # Create the new file path with random prefix
         new_file_path = os.path.join(
             project_path,
             random_key + "_" + cleaned_file_name
@@ -154,10 +154,10 @@ class DataController(BaseController):
         Used by:
             - self.generate_unique_filepath(): For cleaning file names before storage
         """
-        # Remove any special characters, except underscore and .
+        # Remove any special characters, except underscore and dot
         cleaned_file_name = re.sub(r'[^\w.]', '', orig_file_name.strip())
 
-        # Replace spaces with underscore
+        # Replace spaces with underscore for better file system compatibility
         cleaned_file_name = cleaned_file_name.replace(" ", "_")
 
         return cleaned_file_name

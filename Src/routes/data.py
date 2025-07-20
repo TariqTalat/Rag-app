@@ -1,25 +1,4 @@
-"""
-Data Router Module
-==================
-
-This module defines the data API router that handles file upload and data
-processing endpoints. It provides the core functionality for the RAG system's
-file handling capabilities including validation, storage, and error handling.
-
-Dependencies:
-- fastapi: For API router, file uploads, and dependency injection
-- os: For file system operations
-- helpers.config: For application settings and dependency injection
-- controllers: For data and project controller functionality
-- aiofiles: For asynchronous file operations
-- models.ResponseSignals: For standardized response messages
-- logging: For error logging
-
-Used by:
-- main.py: Included in the main FastAPI application
-"""
-
-from fastapi import FastAPI, APIRouter, Depends, UploadFile, status
+from fastapi import FastAPI, APIRouter, Depends, UploadFile, status, Request
 from fastapi.responses import JSONResponse
 import os
 from helpers.config import get_settings, Settings
@@ -28,54 +7,35 @@ import aiofiles
 from models import ResponseSignals
 import logging
 from .schemes.data import ProcessRequest
+from models.ProjectModel import ProjectModel
+from models.ChunkModel import ChunkModel
+from models.db_schemes import DataChunk
 
-# Set up logging for error tracking
 logger = logging.getLogger('uvicorn.error')
 
-# Create data router with API version prefix and tags
 data_router = APIRouter(
     prefix="/api/v1/data",
     tags=["api_v1", "data"],
 )
 
 @data_router.post("/upload/{project_id}")
-async def upload_data(project_id: str, file: UploadFile,
+async def upload_data(request: Request, project_id: str, file: UploadFile,
                       app_settings: Settings = Depends(get_settings)):
-    """
-    File upload endpoint for RAG system
+        
     
-    This endpoint handles file uploads for the RAG system, including
-    validation, storage, and error handling. It processes uploaded files
-    and stores them in project-specific directories with unique names.
-    
-    Args:
-        project_id (str): Unique identifier for the project
-        file (UploadFile): The uploaded file from the request
-        app_settings (Settings): Application settings injected by FastAPI
-    
-    Returns:
-        JSONResponse: Success or error response with appropriate status code
-    
-    Used by:
-        - main.py: Included in the data_router for file upload functionality
-        - External clients: For uploading files to the RAG system
-    
-    Dependencies:
-        - DataController: For file validation and path generation
-        - ProjectController: For project directory management
-        - helpers/config.py -> Settings: For configuration access
-        - models.ResponseSignals: For standardized response messages
-    """
-    
-    # Initialize data controller for file processing
-    # Used by: controllers/DataController.py
+    project_model = ProjectModel(
+        db_client=request.app.db_client
+    )
+
+    project = await project_model.get_project_or_create_one(
+        project_id=project_id
+    )
+
+    # validate the file properties
     data_controller = DataController()
 
-    # Validate the uploaded file for type and size compliance
-    # Used by: DataController.validate_uploaded_file()
     is_valid, result_signal = data_controller.validate_uploaded_file(file=file)
 
-    # Return error response if validation fails
     if not is_valid:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -84,81 +44,93 @@ async def upload_data(project_id: str, file: UploadFile,
             }
         )
 
-    # Get project directory path for file storage
-    # Used by: ProjectController.get_project_path()
     project_dir_path = ProjectController().get_project_path(project_id=project_id)
-    
-    # Generate unique file path and file ID
-    # Used by: DataController.generate_unique_filepath()
     file_path, file_id = data_controller.generate_unique_filepath(
         orig_file_name=file.filename,
         project_id=project_id
     )
 
     try:
-        # Write the uploaded file to disk using asynchronous file operations
-        # Used by: aiofiles for async file handling
         async with aiofiles.open(file_path, "wb") as f:
-            # Read file in chunks and write to disk
-            # Used by: helpers/config.py -> Settings.FILE_DEFAULT_CHUNK_SIZE
             while chunk := await file.read(app_settings.FILE_DEFAULT_CHUNK_SIZE):
                 await f.write(chunk)
     except Exception as e:
-        # Log error for debugging purposes
+
         logger.error(f"Error while uploading file: {e}")
 
-        # Return error response for upload failure
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
-                "signal": ResponseSignals.FILE_UPLOADED_FAIL.value
+                "signal": ResponseSignals.FILE_UPLOAD_FAILED.value
             }
         )
 
-    # Return success response with file ID
     return JSONResponse(
             content={
                 "signal": ResponseSignals.FILE_UPLOAD_SUCCESS.value,
-                "file_id": file_id
+                "file_id": file_id,
             }
         )
 
 @data_router.post("/process/{project_id}")
-async def process_endpoint(project_id: str, process_request: ProcessRequest,
-                app_settings: Settings = Depends(get_settings)):
-    
+async def process_endpoint(request: Request, project_id: str, process_request: ProcessRequest):
+
     file_id = process_request.file_id
-    chunck_size = process_request.chunk_size
-    chunk_overlap = process_request.chunk_size
+    chunk_size = process_request.chunk_size
+    chunk_overlap = process_request.overlap_size
+    do_reset = process_request.do_reset
+
+    project_model = ProjectModel(
+        db_client=request.app.db_client
+    )
+
+    project = await project_model.get_project_or_create_one(
+        project_id=project_id
+    )
 
     process_controller = ProcessController(project_id=project_id)
 
-    # Get file content based on file ID
     file_content = process_controller.get_file_content(file_id=file_id)
 
-    if not file_content:
-        return JSONResponse(
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={
-                "signal": ResponseSignals.FILE_NOT_FOUND.value
-            }
-        )
-    
-    # Process file content into chunks
-    file_chunks = process_controller.proess_file_content(
+    file_chunks = process_controller.process_file_content(
         file_content=file_content,
-        chunk_size=chunck_size,
-        chunk_overlap=chunk_overlap,
-        file_id=file_id
+        file_id=file_id,
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap
     )
 
-    if not file_chunks:
+    if file_chunks is None or len(file_chunks) == 0:
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
                 "signal": ResponseSignals.FILE_PROCESSING_FAIL.value
             }
         )
-    
-    # Return success response with processed file chunks
-    return file_chunks
+
+    file_chunks_records = [
+        DataChunk(
+            chunk_text=chunk.page_content,
+            chunk_metadata=chunk.metadata,
+            chunk_order=i+1,
+            chunk_project_id=project.id,
+        )
+        for i, chunk in enumerate(file_chunks)
+    ]
+
+    chunk_model = ChunkModel(
+        db_client=request.app.db_client
+    )
+
+    if do_reset == 1:
+        _ = await chunk_model.delete_chunks_by_project_id(
+            project_id=project.id
+        )
+
+    no_records = await chunk_model.insert_many_chunks(chunks=file_chunks_records)
+
+    return JSONResponse(
+        content={
+            "signal": ResponseSignals.FILE_PROCESSING_SUCCESS.value,
+            "inserted_chunks": no_records
+        }
+    )

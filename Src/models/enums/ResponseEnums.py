@@ -31,11 +31,16 @@ class ResponseSignals(Enum):
         FILE_UPLOAD_SUCCESS: File upload completed successfully
         FILE_UPLOADED_FAIL: File upload failed
     """
+    # File validation responses
     FILE_VALIDATE_SUCCESS = "file validation successful"
     FILE_VALIDATE_FAIL = "file validation failed"
+    
+    # File operation responses
     FILE_NOT_FOUND = "file not found"
     FILE_TYPE_NOT_SUPPORTED = "file type not supported"
     FILE_SIZE_EXCEEDED = "file size exceeded"
+    
+    # File upload responses
     FILE_UPLOAD_SUCCESS = "file uploaded successfully"
     FILE_UPLOADED_FAIL = "file upload failed"
     FILE_PROCESSING_FAIL = "file processing failed"
