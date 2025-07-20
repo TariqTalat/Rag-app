@@ -2,6 +2,13 @@
 Main FastAPI Application Entry Point
 ====================================
 
+Stepwise Breakdown:
+-------------------
+1. Import FastAPI, routers, and configuration dependencies.
+2. Initialize the FastAPI app.
+3. Set up MongoDB connection on startup and shutdown events.
+4. Include routers for base and data endpoints.
+
 This module serves as the main entry point for the mini-RAG FastAPI application.
 It initializes the FastAPI app and includes all the necessary routers for different
 API endpoints.
@@ -12,10 +19,6 @@ Dependencies:
 - routes.data: Data router for file upload and data management endpoints
 - motor.motor_asyncio: MongoDB async driver
 - helpers.config: Application settings
-
-Router Connections:
-- base_router: Handles general API endpoints (health check, app info)
-- data_router: Handles file upload and data processing endpoints
 """
 
 from fastapi import FastAPI
@@ -24,42 +27,45 @@ from routes import data
 from motor.motor_asyncio import AsyncIOMotorClient
 from helpers.config import get_settings
 
-
-# Initialize the FastAPI application with default settings
+# Step 1: Initialize the FastAPI application with default settings
 app = FastAPI()
 
 @app.on_event("startup")
 async def startup_db_client():
     """
-    Initialize MongoDB connection on app startup
-    
+    Startup Event: Initialize MongoDB Connection
+    --------------------------------------------
     Creates async MongoDB client and database connection
-    using settings from environment variables
+    using settings from environment variables.
+
+    Example usage:
+        This runs automatically when the FastAPI app starts.
     """
-    # Get application settings for database configuration
+    # Step 1: Get application settings for database configuration
     settings = get_settings()
-    
-    # Create MongoDB async client connection
+    # Step 2: Create MongoDB async client connection
     app.mongo_conn = AsyncIOMotorClient(settings.MONGODB_URL)
-    
-    # Set database client for the application
+    # Step 3: Set database client for the application
     app.db_client = app.mongo_conn[settings.MONGODB_DATABASE]
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
     """
-    Close MongoDB connection on app shutdown
-    
-    Ensures proper cleanup of database connections
+    Shutdown Event: Close MongoDB Connection
+    ----------------------------------------
+    Ensures proper cleanup of database connections.
+
+    Example usage:
+        This runs automatically when the FastAPI app shuts down.
     """
-    # Close MongoDB connection to free resources
+    # Step 1: Close MongoDB connection to free resources
     app.mongo_conn.close()
 
-# Include the base router for general API endpoints
+# Step 2: Include the base router for general API endpoints
 # Used by: routes/base.py -> base_router
 app.include_router(base.base_router)
 
-# Include the data router for file upload and data management endpoints
+# Step 3: Include the data router for file upload and data management endpoints
 # Used by: routes/data.py -> data_router
 app.include_router(data.data_router)
 

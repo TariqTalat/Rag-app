@@ -2,6 +2,14 @@
 Data Controller Module
 ======================
 
+Stepwise Breakdown:
+-------------------
+1. Import dependencies and base classes.
+2. Define the DataController class for file validation and upload logic.
+3. Implement file validation (type and size).
+4. Implement unique file path generation for uploads.
+5. Implement file name cleaning for safe storage.
+
 This module handles all data-related operations including file validation,
 file upload processing, and file path management. It provides the core
 functionality for the RAG system's file handling capabilities.
@@ -28,136 +36,101 @@ import os
 class DataController(BaseController):
     """
     Data Controller Class
-    
-    This class handles all data processing operations including file validation,
-    file upload management, and file path generation. It extends BaseController
-    to inherit common functionality while providing specialized data handling.
-    
+    --------------------
+    Handles all data processing operations including file validation,
+    file upload management, and file path generation. Inherits from BaseController.
+
     Attributes:
         size_scale (int): Conversion factor from MB to bytes (1048576)
-    
-    Used by:
-        - routes/data.py: For processing file uploads in API endpoints
+
+    Example usage:
+        >>> controller = DataController()
+        >>> is_valid, msg = controller.validate_uploaded_file(file)
+        >>> path, fname = controller.generate_unique_filepath('my.txt', 'proj1')
     """
     
     def __init__(self):
         """
-        Initialize the data controller with size conversion settings
-        
+        Initialize the data controller with size conversion settings.
         Sets up the controller with a size scale factor for converting
         between MB and bytes for file size validation.
+
+        Example usage:
+            >>> controller = DataController()
         """
-        # Initialize parent class (BaseController)
+        # Step 1: Initialize parent class (BaseController)
         super().__init__()
-        
-        # Size scale factor: 1 MB = 1048576 bytes
+        # Step 2: Set size scale factor: 1 MB = 1048576 bytes
         self.size_scale = 1048576 # convert MB to bytes
 
     def validate_uploaded_file(self, file: UploadFile):
         """
-        Validate uploaded file for type and size compliance
-        
-        This method checks if the uploaded file meets the application's
-        requirements for file type and size limits.
-        
+        Validate uploaded file for type and size compliance.
+        Checks if the uploaded file meets the application's requirements for file type and size limits.
+
         Args:
             file (UploadFile): The uploaded file to validate
-        
         Returns:
             tuple: (bool, str) - (is_valid, response_message)
-        
-        Used by:
-            - routes/data.py -> upload_data(): For validating files before upload
-        
-        Response Signals:
-            - FILE_VALIDATE_SUCCESS: File passes all validation checks
-            - FILE_TYPE_NOT_SUPPORTED: File type is not in allowed list
-            - FILE_SIZE_EXCEEDED: File size exceeds maximum limit
+
+        Example usage:
+            >>> is_valid, msg = DataController().validate_uploaded_file(file)
         """
-        # Check if file type is in the allowed types list
-        # Used by: helpers/config.py -> Settings.FILE_ALLOWED_TYPES
+        # Step 1: Check if file type is in the allowed types list
         if file.content_type not in self.app_settings.FILE_ALLOWED_TYPES:
             return False, ResponseSignals.FILE_TYPE_NOT_SUPPORTED.value
-
-        # Check if file size exceeds the maximum allowed size
-        # Used by: helpers/config.py -> Settings.FILE_MAX_SIZE
+        # Step 2: Check if file size exceeds the maximum allowed size
         if file.size > self.app_settings.FILE_MAX_SIZE * self.size_scale:
             return False, ResponseSignals.FILE_SIZE_EXCEEDED.value
-
+        # Step 3: File is valid
         return True, ResponseSignals.FILE_VALIDATE_SUCCESS.value
 
     def generate_unique_filepath(self, orig_file_name: str, project_id: str):
         """
-        Generate a unique file path for uploaded files
-        
-        This method creates a unique file path by combining a random string
-        with the cleaned original file name, ensuring no filename conflicts.
-        
+        Generate a unique file path for uploaded files.
+        Creates a unique file path by combining a random string with the cleaned original file name.
+
         Args:
             orig_file_name (str): Original name of the uploaded file
             project_id (str): ID of the project for directory organization
-        
         Returns:
             tuple: (str, str) - (full_file_path, unique_file_name)
-        
-        Used by:
-            - routes/data.py -> upload_data(): For creating unique file paths
-        
-        Dependencies:
-            - self.generate_random_string(): For creating random identifiers
-            - ProjectController.get_project_path(): For getting project directory
-            - self.get_clean_file_name(): For cleaning the original filename
+
+        Example usage:
+            >>> path, fname = DataController().generate_unique_filepath('my.txt', 'proj1')
         """
-        # Generate a random key for uniqueness
-        # Used by: BaseController.generate_random_string()
+        # Step 1: Generate a random key for uniqueness
         random_key = self.generate_random_string()
-        
-        # Get the project directory path
-        # Used by: ProjectController.get_project_path()
+        # Step 2: Get the project directory path
         project_path = ProjectController().get_project_path(project_id=project_id)
-
-        # Clean the original file name
-        # Used by: self.get_clean_file_name()
-        cleaned_file_name = self.get_clean_file_name(
-            orig_file_name=orig_file_name
-        )
-
-        # Create the new file path with random prefix
-        new_file_path = os.path.join(
-            project_path,
-            random_key + "_" + cleaned_file_name
-        )
-
-        # Ensure uniqueness by regenerating if file already exists
+        # Step 3: Clean the original file name
+        cleaned_file_name = self.get_clean_file_name(orig_file_name=orig_file_name)
+        # Step 4: Create the new file path with random prefix
+        new_file_path = os.path.join(project_path, random_key + "_" + cleaned_file_name)
+        # Step 5: Ensure uniqueness by regenerating if file already exists
         while os.path.exists(new_file_path):
             random_key = self.generate_random_string()
-            new_file_path = os.path.join(
-                project_path,
-                random_key + "_" + cleaned_file_name
-            )
-
+            new_file_path = os.path.join(project_path, random_key + "_" + cleaned_file_name)
+        # Step 6: Return the unique file path and name
         return new_file_path, random_key + "_" + cleaned_file_name
 
     def get_clean_file_name(self, orig_file_name: str):
         """
-        Clean and sanitize file names for safe storage
-        
-        This method removes special characters and spaces from file names
-        to ensure they are safe for file system storage.
-        
+        Clean and sanitize file names for safe storage.
+        Removes special characters and spaces from file names to ensure they are safe for file system storage.
+
         Args:
             orig_file_name (str): Original file name to clean
-        
         Returns:
             str: Cleaned file name safe for file system storage
-        
-        Used by:
-            - self.generate_unique_filepath(): For cleaning file names before storage
+
+        Example usage:
+            >>> DataController().get_clean_file_name('my file@2024.txt')
+            'myfile2024.txt'
         """
-        # Remove any special characters, except underscore and dot
+        # Step 1: Remove any special characters, except underscore and dot
         cleaned_file_name = re.sub(r'[^\w.]', '', orig_file_name.strip())
-
-        # Replace spaces with underscore for better file system compatibility
+        # Step 2: Replace spaces with underscore for better file system compatibility
         cleaned_file_name = cleaned_file_name.replace(" ", "_")
-
+        # Step 3: Return cleaned name
         return cleaned_file_name
