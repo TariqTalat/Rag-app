@@ -37,7 +37,7 @@ async def upload_data(request: Request, project_id: str, file: UploadFile,
     is_valid, result_signal = data_controller.validate_uploaded_file(file=file)
 
     if not is_valid:
-        return JSONResponse(
+        return (JSONResponse
             status_code=status.HTTP_400_BAD_REQUEST,
             content={
                 "signal": result_signal
