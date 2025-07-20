@@ -1,10 +1,10 @@
 {
 	"info": {
-		"_postman_id": "1f67dedb-1b93-4639-9f96-7fe8681693f4",
+		"_postman_id": "8a992a8a-ea94-4d52-9b17-2be57168351a",
 		"name": "mini-rag-app",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "854486",
-		"_collection_link": "https://www.postman.com/gold-water-645258/workspace/mini-rag-app/collection/854486-1f67dedb-1b93-4639-9f96-7fe8681693f4?action=share&source=collection_link&creator=854486"
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "46282833",
+		"_collection_link": "https://tariqtalat.postman.co/workspace/Tariq-Talat's-Workspace~fb70b0f2-9bf2-403e-8b14-fe5181d810b2/collection/46282833-8a992a8a-ea94-4d52-9b17-2be57168351a?action=share&source=collection_link&creator=46282833"
 	},
 	"item": [
 		{
@@ -12,15 +12,33 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": {
-					"raw": "{{api}}/welcome",
-					"host": [
-						"{{api}}"
-					],
-					"path": [
-						"welcome"
-					]
-				}
+				"url": "{{api}}/welcome"
+			},
+			"response": []
+		},
+		{
+			"name": "upload",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\":5\r\n}"
+				},
+				"url": ""
+			},
+			"response": []
+		},
+		{
+			"name": "proces",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"id\":5\r\n}"
+				},
+				"url": ""
 			},
 			"response": []
 		}
