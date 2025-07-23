@@ -80,7 +80,7 @@ class ProjectModel(BaseDataModel):
         # Step 1: Insert project document
         result = await self.collection.insert_one(project.dict(by_alias=True, exclude_unset=True))
         # Step 2: Assign inserted ID to project
-        project._id = result.inserted_id
+        project.id = result.inserted_id
         # Step 3: Return the project
         return project
 

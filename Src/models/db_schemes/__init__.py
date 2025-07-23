@@ -16,3 +16,5 @@ from .project import Project
 
 # Export data chunk schema for chunk data validation
 from .data_chunk import DataChunk
+
+from .assets import Asset

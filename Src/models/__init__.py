@@ -16,3 +16,5 @@ from .enums.ResponseEnums import ResponseSignals
 
 # Export processing enums for file type handling
 from .enums.ProcessingEnum import ProcessingEnum
+
+from .AssetModel import AssetModel  # Import the AssetModel class

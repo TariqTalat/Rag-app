@@ -37,3 +37,4 @@ class DataBaseEnum(Enum):
     COLLECTION_PROJECT_NAME = "projects"
     # Step 2: Collection for storing processed data chunks
     COLLECTION_CHUNK_NAME = "chunks"
+    COLLECTION_ASSET_NAME = "assets"
