@@ -48,6 +48,7 @@ class DataChunk(BaseModel):
     chunk_order: int = Field(..., gt=0)
     # Step 5: The project this chunk belongs to
     chunk_project_id: ObjectId
+    chunk_asset_id: ObjectId
 
     class Config:
         arbitrary_types_allowed = True

@@ -39,7 +39,7 @@ class ProcessRequest(BaseModel):
         >>> print(req.dict())
     """
     # Step 1: File identifier for processing
-    file_id: str
+    file_id: str = None
     # Step 2: Size of text chunks for processing (default: 100 characters)
     chunk_size: Optional[int] = 100
     # Step 3: Overlap size between chunks (default: 20 characters)

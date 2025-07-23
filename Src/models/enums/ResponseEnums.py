@@ -54,3 +54,5 @@ class ResponseSignals(Enum):
     # Step 4: File processing responses
     FILE_PROCESSING_FAIL = "file processing failed"
     FILE_PROCESSING_SUCCESS = "file processing successful"
+    NO_FILES_ERROR = "no files found for processing"
+    PROCESSING_SUCCESS = "processing completed successfully"
