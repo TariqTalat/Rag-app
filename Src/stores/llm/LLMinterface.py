@@ -11,16 +11,14 @@ class LLMInterface(ABC):
         pass
 
     @abstractmethod
-    def generate_text(self, propmpt: str,chat_history: list=[],  max_output_tokens: int =None, 
-                      temperature: float = None):
+    def generate_text(self, prompt: str, chat_history: list=[], max_output_tokens: int=None,
+                            temperature: float = None):
         pass
-    
+
     @abstractmethod
     def embed_text(self, text: str, document_type: str = None):
         pass
 
     @abstractmethod
-    def construct_prompt(self,prompt: str, role:str):
+    def construct_prompt(self, prompt: str, role: str):
         pass
-
-
