@@ -1,15 +1,51 @@
-from ..LLMInterface import LLMInterface
-from ..LLMEnums import CoHereEnums, DocumentTypeEnum
+"""
+Cohere Provider Module
+=======================
+
+This module implements the Cohere provider for LLM operations.
+It provides methods for text generation and embedding using the Cohere API.
+
+Dependencies:
+- cohere: For interacting with the Cohere API
+- logging: For logging errors and information
+"""
+
+# Import LLM interface and enums
+from ..LLMinterface import LLMInterface
+from ..LLMEnum import CoHereEnums, DocumentTypeEnum
+# Import Cohere client
 import cohere
+# Import logging for error handling
 import logging
 
 class CoHereProvider(LLMInterface):
+    """
+    Cohere provider implementation for LLM operations.
+
+    Attributes:
+    - api_key: API key for Cohere
+    - default_input_max_characters: Default maximum input characters
+    - default_generation_max_output_tokens: Default maximum output tokens for generation
+    - default_generation_temperature: Default temperature for generation
+    - generation_model_id: Model ID for generation tasks
+    - embedding_model_id: Model ID for embedding tasks
+    - embedding_size: Size of embedding vectors
+    - client: Cohere client instance
+    - logger: Logger instance for error handling
+    """
 
     def __init__(self, api_key: str,
                        default_input_max_characters: int=1000,
                        default_generation_max_output_tokens: int=1000,
                        default_generation_temperature: float=0.1):
-        
+        """
+        Initializes the Cohere provider with default settings.
+
+        Steps:
+        1. Set API key and default parameters.
+        2. Initialize Cohere client.
+        3. Set up logger.
+        """
         self.api_key = api_key
 
         self.default_input_max_characters = default_input_max_characters
@@ -26,17 +62,34 @@ class CoHereProvider(LLMInterface):
         self.logger = logging.getLogger(__name__)
 
     def set_generation_model(self, model_id: str):
+        """
+        Sets the generation model ID.
+        """
         self.generation_model_id = model_id
 
     def set_embedding_model(self, model_id: str, embedding_size: int):
+        """
+        Sets the embedding model ID and size.
+        """
         self.embedding_model_id = model_id
         self.embedding_size = embedding_size
 
     def process_text(self, text: str):
+        """
+        Processes input text by trimming it to the maximum allowed characters.
+        """
         return text[:self.default_input_max_characters].strip()
 
     def generate_text(self, prompt: str, chat_history: list=[], max_output_tokens: int=None,
                             temperature: float = None):
+        """
+        Generates text using the Cohere API.
+
+        Steps:
+        1. Validate client and generation model.
+        2. Set default values for max_output_tokens and temperature if not provided.
+        3. Generate text using the Cohere client.
+        """
 
         if not self.client:
             self.logger.error("CoHere client was not set")
@@ -64,6 +117,15 @@ class CoHereProvider(LLMInterface):
         return response.text
     
     def embed_text(self, text: str, document_type: str = None):
+        """
+        Embeds text using the Cohere API.
+
+        Steps:
+        1. Validate client and embedding model.
+        2. Determine input type based on document type.
+        3. Embed text using the Cohere client.
+        """
+
         if not self.client:
             self.logger.error("CoHere client was not set")
             return None
@@ -90,6 +152,12 @@ class CoHereProvider(LLMInterface):
         return response.embeddings.float[0]
     
     def construct_prompt(self, prompt: str, role: str):
+        """
+        Constructs a prompt for the Cohere API.
+
+        Returns:
+        - A dictionary with role and processed text
+        """
         return {
             "role": role,
             "text": self.process_text(prompt)

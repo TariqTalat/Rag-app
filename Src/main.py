@@ -1,74 +1,66 @@
 """
-Main FastAPI Application Entry Point
-====================================
+Main Application Module
+=======================
 
-Stepwise Breakdown:
--------------------
-1. Import FastAPI, routers, and configuration dependencies.
-2. Initialize the FastAPI app.
-3. Set up MongoDB connection on startup and shutdown events.
-4. Include routers for base and data endpoints.
-
-This module serves as the main entry point for the mini-RAG FastAPI application.
-It initializes the FastAPI app and includes all the necessary routers for different
-API endpoints.
+This module initializes the FastAPI application, sets up database connections,
+and configures LLM providers for generation and embedding tasks.
 
 Dependencies:
-- FastAPI: Web framework for building APIs
-- routes.base: Base router for general API endpoints
-- routes.data: Data router for file upload and data management endpoints
-- motor.motor_asyncio: MongoDB async driver
-- helpers.config: Application settings
+- fastapi: For building the web application
+- motor: For MongoDB asynchronous client
+- helpers.config: For application settings
+- stores.llm.LLMProviderFactory: For LLM provider management
 """
 
+# Import FastAPI for web application
 from fastapi import FastAPI
-from routes import base
-from routes import data
+# Import routes for base and data endpoints
+from routes import base, data
+# Import MongoDB asynchronous client
 from motor.motor_asyncio import AsyncIOMotorClient
+# Import settings helper
 from helpers.config import get_settings
+# Import LLM provider factory
+from stores.llm.LLMProviderFactory import LLMProviderFactory
 
-# Step 1: Initialize the FastAPI application with default settings
+# Initialize FastAPI application
 app = FastAPI()
 
-@app.on_event("startup")
 async def startup_db_client():
     """
-    Startup Event: Initialize MongoDB Connection
-    --------------------------------------------
-    Creates async MongoDB client and database connection
-    using settings from environment variables.
-
-    Example usage:
-        This runs automatically when the FastAPI app starts.
+    Startup function to initialize database and LLM clients.
+    
+    Steps:
+    1. Retrieve application settings.
+    2. Connect to MongoDB.
+    3. Initialize LLM provider factory.
+    4. Configure generation and embedding clients.
     """
-    # Step 1: Get application settings for database configuration
     settings = get_settings()
-    # Step 2: Create MongoDB async client connection
     app.mongo_conn = AsyncIOMotorClient(settings.MONGODB_URL)
-    # Step 3: Set database client for the application
     app.db_client = app.mongo_conn[settings.MONGODB_DATABASE]
 
-@app.on_event("shutdown")
+    llm_provider_factory = LLMProviderFactory(settings)
+
+    # Step 3: Initialize generation client
+    app.generation_client = llm_provider_factory.create(provider=settings.GENERATION_BACKEND)
+    app.generation_client.set_generation_model(model_id = settings.GENERATION_MODEL_ID)
+
+    # Step 4: Initialize embedding client
+    app.embedding_client = llm_provider_factory.create(provider=settings.EMBEDDING_BACKEND)
+    app.embedding_client.set_embedding_model(model_id=settings.EMBEDDING_MODEL_ID,
+                                             embedding_size=settings.EMBEDDING_MODEL_SIZE)
+
 async def shutdown_db_client():
     """
-    Shutdown Event: Close MongoDB Connection
-    ----------------------------------------
-    Ensures proper cleanup of database connections.
-
-    Example usage:
-        This runs automatically when the FastAPI app shuts down.
+    Shutdown function to close database connections.
     """
-    # Step 1: Close MongoDB connection to free resources
     app.mongo_conn.close()
 
-# Step 2: Include the base router for general API endpoints
-# Used by: routes/base.py -> base_router
+# Register startup and shutdown functions
+app.router.lifespan.on_startup.append(startup_db_client)
+app.router.lifespan.on_shutdown.append(shutdown_db_client)
+
+# Include application routes
 app.include_router(base.base_router)
-
-# Step 3: Include the data router for file upload and data management endpoints
-# Used by: routes/data.py -> data_router
 app.include_router(data.data_router)
-
-
-
-

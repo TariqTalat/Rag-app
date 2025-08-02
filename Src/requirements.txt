@@ -10,3 +10,4 @@ motor==3.7.1
 datetime
 openai 
 cohere
+qdrant-client == 1.10.1
